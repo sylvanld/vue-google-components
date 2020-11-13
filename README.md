@@ -73,7 +73,7 @@ https://developers.google.com/maps/documentation/javascript/libraries
 }
 ```
 
-*Where location has type [GLocation](#location)*
+*Where location has type [GLocation](#glocation)*
 
 ## Available components
 
@@ -100,7 +100,7 @@ To optimize your google API key's quotas, you don't want to call google search a
 
 Display a [GPlace](#gplace) object in a Google map.
 
-Optionally centered on a [GLocation](#location).
+Optionally centered on a [GLocation](#glocation).
 
 #### Example usage
 
