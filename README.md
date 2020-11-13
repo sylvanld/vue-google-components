@@ -9,6 +9,7 @@
   - [How to use ?](#how-to-use-)
     - [Requirements](#requirements)
     - [Installation](#installation)
+    - [Google SDK libraries](#google-sdk-libraries)
   - [Library types](#library-types)
     - [Place](#place)
   - [Available components](#available-components)
@@ -30,17 +31,28 @@ In order to use this library, you have to properly configure the following
 
 Register `VuetifyGoogleComponents` in your `vue.js` application.
 
-```typescript
+```javascript
 import Vue from 'vue'
 import VuetifyGoogleComponents from './path/to/vuetify-google-components'
 
 Vue.use(VuetifyGoogleComponents, {
-  apiKey: process.env.VUE_APP_GOOGLE_API_KEY
+  apiKey: process.env.VUE_APP_GOOGLE_API_KEY,
+  libraries: {
+    places: true,
+    // ...
+  }
 })
 
 ```
 
-> Here I assume you provided an environment variable named `VUE_APP_GOOGLE_API_KEY` containing a valid api key [provided by google](https://developers.google.com/maps/documentation/javascript/get-api-key)
+*  Here I assume you provided an environment variable named `VUE_APP_GOOGLE_API_KEY` containing a valid api key [provided by google](https://developers.google.com/maps/documentation/javascript/get-api-key)
+*  The **libraries field** contains a list of boolean matching valid **Google SDK libraries** required by your application[\[1\]](#google-sdk-libraries).
+
+### Google SDK libraries
+
+To learn more, please refers to Google's documentation.
+
+https://developers.google.com/maps/documentation/javascript/libraries
 
 ## Library types
 
