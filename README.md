@@ -11,7 +11,8 @@
     - [Installation](#installation)
     - [Google SDK libraries](#google-sdk-libraries)
   - [Library types](#library-types)
-    - [Place](#place)
+    - [GLocation](#glocation)
+    - [GPlace](#gplace)
   - [Available components](#available-components)
     - [Autocomplete](#autocomplete)
       - [Example usage](#example-usage)
@@ -56,23 +57,30 @@ https://developers.google.com/maps/documentation/javascript/libraries
 
 ## Library types
 
-### Place
+### GLocation
+```typescript
+{
+  lat: number;
+  lng: number;
+}
+```
+
+### GPlace
 ```typescript
 {
   name: string;
-  location: {
-    lat: number;
-    lng: number;
-  }
+  location: GLocation;
 }
 ```
+
+*Where location has type [GLocation](#location)*
 
 ## Available components
 
 ### Autocomplete
 
 Input to query addresses from Google Places.
-When an option is selected, `v-model` is updated with the selected [Place](#place).
+When an option is selected, `v-model` is updated with the selected [GPlace](#gplace).
 
 #### Example usage
 
@@ -90,9 +98,9 @@ To optimize your google API key's quotas, you don't want to call google search a
 
 ### Map
 
-Display a [Place](#place) object in a Google map.
+Display a [GPlace](#gplace) object in a Google map.
 
-Optionally centered on another [Place](#place).
+Optionally centered on a [GLocation](#location).
 
 #### Example usage
 
@@ -111,11 +119,8 @@ export default{
       place: null,
 
       bejing: {
-        name: 'Bejing',
-        location: {
-          lat: 39.90419989,
-          lng: 116.4073963
-        }
+        lat: 39.90419989,
+        lng: 116.4073963
       }
     }
   }

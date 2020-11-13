@@ -6,7 +6,7 @@
 
 
 <script lang="ts">
-import { Place } from "../types";
+import { GPlace, GLocation } from "../types";
 import Vue from "vue";
 import Component from "vue-class-component";
 import { Prop, Watch } from "vue-property-decorator";
@@ -17,13 +17,17 @@ Vue.prototype.$google = null;
 @Component
 export default class GoogleMap extends Vue {
   @Prop({ required: true })
-  private place!: Place;
+  private place!: GPlace;
 
   @Prop({ required: false })
-  private center!: Place;
+  private center!: GLocation;
 
   @Prop({ required: false, default: "Location" })
   private markerLabel!: string;
+
+  mounted() {
+    this.renderMap();
+  }
 
   @Watch("place")
   renderMap() {
@@ -33,7 +37,7 @@ export default class GoogleMap extends Vue {
       GoogleMapsService.createMap({
         mapRoot: mapRoot,
         place: this.place,
-        center: this.center ? this.center : this.place,
+        center: this.center ? this.center : this.place.location,
       });
     }
   }

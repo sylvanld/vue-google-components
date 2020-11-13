@@ -16,7 +16,7 @@
 import Vue from "vue";
 import { Component, Prop, Watch } from "vue-property-decorator";
 import GoogleMapsService from "../services/google-maps";
-import { Place } from "../types";
+import { GPlace } from "../types";
 
 @Component({
   computed: {},
@@ -27,13 +27,13 @@ export default class GooglePlaceAutocomplete extends Vue {
   private selectedPlaceName: string | null = null;
 
   private loading = false;
-  private candidates: Place[] = [];
+  private candidates: GPlace[] = [];
 
   private lastInputTimestamp = new Date().getTime();
   private deltaCounter = 0;
 
   @Prop({ required: true })
-  private value!: Place;
+  private value!: GPlace;
 
   @Prop({ required: false, default: "Search for a place" })
   private label!: string;
@@ -56,53 +56,53 @@ export default class GooglePlaceAutocomplete extends Vue {
    */
   @Watch("selectedPlaceName")
   onSelectedPlaceNameChange(newName: string) {
-    const place: Place = this.candidates.filter(
-      (item: Place) => item.name === newName
+    const place: GPlace = this.candidates.filter(
+      (item) => item.name === newName
     )[0];
     // emit selected place object
     this.$emit("input", place);
   }
 
   /**
-   *
+   * Determine wether querySelections should be called or not. (Manage lazy loading)
    */
   @Watch("queryAddress")
   private onQueryChange(query: string) {
-    const maxIgnoredInput = 10;
-
-    if (query && query !== this.selectedPlaceName) {
-      if (query.length > 5) {
-        this.lazyQuerySelections(query);
-      } else if (this.deltaCounter > maxIgnoredInput) {
-        this.deltaCounter = 0;
-        this.querySelections(query);
-      } else {
-        this.deltaCounter++;
-      }
-    }
-  }
-
-  /**
-   * Called when user tipes to determine wether querySelections
-   * should be called or not. (Manage lazy loading)
-   */
-  lazyQuerySelections(query: string) {
     const timeout = 300;
+    const maxIgnoredInput = 10;
+    const minQuerySize = 5;
+
     const currentTimestamp = new Date().getTime();
 
-    // lastInput was less than timeout ago
-    if (currentTimestamp - this.lastInputTimestamp < timeout) {
-      console.log(`Refresh will be triggered in ${timeout} seconds`);
+    /**
+     * check if query exists and has changed
+     * don't perform search if query is too small
+     * don't perform search for now if user is tiping
+     * */
+    //
+    if (
+      query &&
+      query !== this.selectedPlaceName &&
+      query.length > minQuerySize &&
+      currentTimestamp - this.lastInputTimestamp < timeout
+    ) {
       setTimeout(() => {
         if (this.lastInputTimestamp === currentTimestamp) {
           // called after user stoped tiping for <timeout> ms
           this.querySelections(query);
         }
       }, timeout);
+    } else if (this.deltaCounter > maxIgnoredInput) {
+      this.deltaCounter = 0;
+      this.querySelections(query);
+    } else {
+      this.deltaCounter++;
     }
 
     this.lastInputTimestamp = currentTimestamp;
   }
+
+  //lazyQuerySelections(query: string) {}
 
   /**
    * Query google places API to retrieve new suggestions

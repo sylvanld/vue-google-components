@@ -6,10 +6,12 @@ export interface VueGoogleComponentsOptions {
     }
 }
 
-export interface Place {
+export interface GLocation {
+    lat: number;
+    lng: number;
+}
+
+export interface GPlace {
     name: string;
-    location: {
-        lat: number;
-        lng: number;
-    }
+    location: GLocation;
 }

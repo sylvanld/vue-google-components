@@ -1,4 +1,4 @@
-import { Place } from '../types';
+import { GPlace, GLocation } from '../types';
 
 
 export class GoogleMapsService {
@@ -15,7 +15,7 @@ export class GoogleMapsService {
         });
     }
 
-    public static searchPlace(query: string, fields = ['formatted_address', 'geometry']): Promise<Place[]> {
+    public static searchPlace(query: string, fields = ['formatted_address', 'geometry']): Promise<GPlace[]> {
         return new Promise(resolve => {
             this.googleMapService
                 .then(service => service.findPlaceFromQuery({ query, fields }, (results, status) => {
@@ -41,16 +41,20 @@ export class GoogleMapsService {
         })
     }
 
-    public static createMap(options: { mapRoot: Element | null; place: Place; center: Place }) {
+    public static createMap(options: { mapRoot: Element | null; place: GPlace; center: GLocation; zoom?: number }) {
         this.ready
             .then(() => {
                 if (location && options.mapRoot) {
-                    const centerLatLng = new google.maps.LatLng(options.place.location.lat, options.place.location.lng);
-                    console.log(centerLatLng)
+                    const centerLatLng = new google.maps.LatLng(options.center.lat, options.center.lng);
+                    const placeLatLng = new google.maps.LatLng(options.place.location.lat, options.place.location.lng);
 
-                    new google.maps.Map(options.mapRoot, {
+                    const map = new google.maps.Map(options.mapRoot, {
                         center: centerLatLng,
-                        zoom: 15,
+                        zoom: options.zoom || 13
+                    });
+
+                    new google.maps.Marker({
+                        position: placeLatLng, map: map
                     });
                 }
             })
