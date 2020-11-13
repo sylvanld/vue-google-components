@@ -1,100 +1,118 @@
 <template>
   <v-autocomplete
     :readonly="readonly"
-    v-model="select"
+    v-model="selectedPlaceName"
     :label="label"
     :loading="loading"
-    :items="itemsNames"
-    :search-input.sync="search"
+    :items="candidatesNames"
+    :search-input.sync="queryAddress"
     cache-items
     hide-no-data
     hide-details
   ></v-autocomplete>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from "vue";
+import { Component, Prop, Watch } from "vue-property-decorator";
 import GoogleMapsService from "../services/google-maps";
+import { Place } from "../types";
 
-export default {
-  props: {
-    value: {
-      required: true,
-    },
-    label: {
-      required: false,
-      default: "Search for a place",
-    },
-  },
-  data() {
-    return {
-      readonly: true,
-      lastInputDate: new Date(),
-      ignoredInputCounter: 0,
-      loading: false,
-      items: [],
-      search: null,
-      select: null,
-    };
-  },
+@Component({
+  computed: {},
+})
+export default class GooglePlaceAutocomplete extends Vue {
+  private readonly = true;
+  private queryAddress = "";
+  private selectedPlaceName: string | null = null;
+
+  private loading = false;
+  private candidates: Place[] = [];
+
+  private lastInputTimestamp = new Date().getTime();
+  private deltaCounter = 0;
+
+  @Prop({ required: true })
+  private value!: Place;
+
+  @Prop({ required: false, default: "Search for a place" })
+  private label!: string;
+
+  get candidatesNames() {
+    return this.candidates.map((candidate) => candidate.name);
+  }
+
+  /**
+   * Disable readonly mode when google SDK is loaded.
+   */
   mounted() {
-    // enable tiping only when google library is loaded
-    this.$google.then(() => {
+    GoogleMapsService.ready.then(() => {
       this.readonly = false;
     });
-  },
-  computed: {
-    itemsNames() {
-      return this.items.map((item) => item.name);
-    },
-  },
-  watch: {
-    select(newValue) {
-      console.log(this.items);
-      const place = this.items.filter((item) => item.name === newValue)[0];
-      console.log("emit place");
-      this.$emit("input", place);
-    },
-    search(val) {
-      const maxIgnoredInput = 10;
+  }
 
-      if (val && val !== this.select) {
-        if (val.length > 5) {
-          this.lazyQuerySelections(val);
-        } else if (this.ignoredInputCounter > maxIgnoredInput) {
-          this.ignoredInputCounter = 0;
-          this.querySelections(val);
-        } else {
-          this.ignoredInputCounter++;
+  /**
+   *
+   */
+  @Watch("selectedPlaceName")
+  onSelectedPlaceNameChange(newName: string) {
+    const place: Place = this.candidates.filter(
+      (item: Place) => item.name === newName
+    )[0];
+    // emit selected place object
+    this.$emit("input", place);
+  }
+
+  /**
+   *
+   */
+  @Watch("queryAddress")
+  private onQueryChange(query: string) {
+    const maxIgnoredInput = 10;
+
+    if (query && query !== this.selectedPlaceName) {
+      if (query.length > 5) {
+        this.lazyQuerySelections(query);
+      } else if (this.deltaCounter > maxIgnoredInput) {
+        this.deltaCounter = 0;
+        this.querySelections(query);
+      } else {
+        this.deltaCounter++;
+      }
+    }
+  }
+
+  /**
+   * Called when user tipes to determine wether querySelections
+   * should be called or not. (Manage lazy loading)
+   */
+  lazyQuerySelections(query: string) {
+    const timeout = 300;
+    const currentTimestamp = new Date().getTime();
+
+    // lastInput was less than timeout ago
+    if (currentTimestamp - this.lastInputTimestamp < timeout) {
+      console.log(`Refresh will be triggered in ${timeout} seconds`);
+      setTimeout(() => {
+        if (this.lastInputTimestamp === currentTimestamp) {
+          // called after user stoped tiping for <timeout> ms
+          this.querySelections(query);
         }
-      }
-    },
-  },
-  methods: {
-    lazyQuerySelections(v) {
-      const timeout = 300;
-      const localLastInputDate = new Date();
+      }, timeout);
+    }
 
-      // lastInput was less than timeout ago
-      if (new Date() - this.lastInputDate < timeout) {
-        console.log(`Refresh will be triggered in ${timeout} seconds`);
-        setTimeout(() => {
-          // wait until user stop tiping so quickly
-          if (this.lastInputDate === localLastInputDate) {
-            this.querySelections(v);
-          }
-        }, timeout);
-      }
+    this.lastInputTimestamp = currentTimestamp;
+  }
 
-      this.lastInputDate = localLastInputDate;
-    },
-
-    querySelections(query) {
-      this.loading = true;
-      GoogleMapsService.searchPlace(query).then((candidates) => {
-        this.items = candidates;
-        this.loading = false;
-      });
-    },
-  },
-};
+  /**
+   * Query google places API to retrieve new suggestions
+   */
+  querySelections(query: string) {
+    this.loading = true;
+    GoogleMapsService.searchPlace(query).then((candidates) => {
+      this.candidates = candidates;
+      this.loading = false;
+    });
+  }
+}
 </script>
