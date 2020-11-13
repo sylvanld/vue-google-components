@@ -1,6 +1,15 @@
 
-export interface GoogleMapPlace {
+export interface VueGoogleComponentsOptions {
+    apiKey: string;
+    libraries: {
+        [library: string]: boolean
+    }
+}
+
+export interface Place {
     name: string;
-    abbr: string;
-    id: number;
+    location: {
+        lat: number;
+        lng: number;
+    }
 }
