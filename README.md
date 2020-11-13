@@ -1,17 +1,24 @@
-# Vue Google components
+# Vuetify Google components
 
 > Defines a set of reusable components designed using vuetify, that has built in interactions with Google's APIs.
 
 ## Table of contents
 
-- [Vue Google components](#vue-google-components)
+- [Vuetify Google components](#vuetify-google-components)
   - [Table of contents](#table-of-contents)
   - [How to use ?](#how-to-use-)
     - [Requirements](#requirements)
     - [Installation](#installation)
-  - [Components](#components)
+    - [Google SDK libraries](#google-sdk-libraries)
+  - [Library types](#library-types)
+    - [GLocation](#glocation)
+    - [GPlace](#gplace)
+  - [Available components](#available-components)
     - [Autocomplete](#autocomplete)
-      - [Lazy loading](#lazy-loading)
+      - [Example usage](#example-usage)
+      - [Lazy loading explained](#lazy-loading-explained)
+    - [Map](#map)
+      - [Example usage](#example-usage-1)
 
 ## How to use ?
 
@@ -23,25 +30,100 @@ In order to use this library, you have to properly configure the following
 
 ### Installation
 
-Register `VueGoogleComponents` in your `vue.js` application.
+Register `VuetifyGoogleComponents` in your `vue.js` application.
 
-```typescript
+```javascript
 import Vue from 'vue'
-import VueGoogleComponents from './path/to/vue-google-components'
+import VuetifyGoogleComponents from './path/to/vuetify-google-components'
 
-Vue.use(VueGoogleComponents)
+Vue.use(VuetifyGoogleComponents, {
+  apiKey: process.env.VUE_APP_GOOGLE_API_KEY,
+  libraries: {
+    places: true,
+    // ...
+  }
+})
+
 ```
 
-Then components provided by the library are available.
+*  Here I assume you provided an environment variable named `VUE_APP_GOOGLE_API_KEY` containing a valid api key [provided by google](https://developers.google.com/maps/documentation/javascript/get-api-key)
+*  The **libraries field** contains a list of boolean matching valid **Google SDK libraries** required by your application[\[1\]](#google-sdk-libraries).
 
-## Components
+### Google SDK libraries
+
+To learn more, please refers to Google's documentation.
+
+https://developers.google.com/maps/documentation/javascript/libraries
+
+## Library types
+
+### GLocation
+```typescript
+{
+  lat: number;
+  lng: number;
+}
+```
+
+### GPlace
+```typescript
+{
+  name: string;
+  location: GLocation;
+}
+```
+
+*Where location has type [GLocation](#glocation)*
+
+## Available components
 
 ### Autocomplete
 
-#### Lazy loading
+Input to query addresses from Google Places.
+When an option is selected, `v-model` is updated with the selected [GPlace](#gplace).
+
+#### Example usage
+
+```html
+<template>
+  <google-place-autocomplete v-model="place" />
+</template>
+```
+
+#### Lazy loading explained
 
 To optimize your google API key's quotas, you don't want to call google search api each time the query changes. That's why autocomplete suggestions are lazy loaded according to the following principle.
 
-
-
 ![autocomplete-lazy-loading](docs/images/autocomplete-lazy-loading.png)
+
+### Map
+
+Display a [GPlace](#gplace) object in a Google map.
+
+Optionally centered on a [GLocation](#glocation).
+
+#### Example usage
+
+Assuming you want to search places next to Bejing, you could do the following.
+
+```html
+<template>
+  <google-place-autocomplete v-model="place" />
+  <google-map :place="place" :center="bejing"/>
+</template>
+
+<script>
+export default{
+  data(){
+    return {
+      place: null,
+
+      bejing: {
+        lat: 39.90419989,
+        lng: 116.4073963
+      }
+    }
+  }
+}
+</script>
+```

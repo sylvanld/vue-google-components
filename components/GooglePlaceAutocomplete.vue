@@ -1,129 +1,118 @@
 <template>
   <v-autocomplete
-    v-model="select"
+    :readonly="readonly"
+    v-model="selectedPlaceName"
     :label="label"
     :loading="loading"
-    :items="items"
-    :search-input.sync="search"
+    :items="candidatesNames"
+    :search-input.sync="queryAddress"
     cache-items
     hide-no-data
     hide-details
   ></v-autocomplete>
 </template>
 
-<script>
-export default {
-  props: {
-    label: {
-      required: false,
-      default: "Hello bitches",
-    },
-  },
-  data() {
-    return {
-      lastInputDate: new Date(),
-      loading: false,
-      items: [],
-      search: null,
-      select: null,
-      states: [
-        "Alabama",
-        "Alaska",
-        "American Samoa",
-        "Arizona",
-        "Arkansas",
-        "California",
-        "Colorado",
-        "Connecticut",
-        "Delaware",
-        "District of Columbia",
-        "Federated States of Micronesia",
-        "Florida",
-        "Georgia",
-        "Guam",
-        "Hawaii",
-        "Idaho",
-        "Illinois",
-        "Indiana",
-        "Iowa",
-        "Kansas",
-        "Kentucky",
-        "Louisiana",
-        "Maine",
-        "Marshall Islands",
-        "Maryland",
-        "Massachusetts",
-        "Michigan",
-        "Minnesota",
-        "Mississippi",
-        "Missouri",
-        "Montana",
-        "Nebraska",
-        "Nevada",
-        "New Hampshire",
-        "New Jersey",
-        "New Mexico",
-        "New York",
-        "North Carolina",
-        "North Dakota",
-        "Northern Mariana Islands",
-        "Ohio",
-        "Oklahoma",
-        "Oregon",
-        "Palau",
-        "Pennsylvania",
-        "Puerto Rico",
-        "Rhode Island",
-        "South Carolina",
-        "South Dakota",
-        "Tennessee",
-        "Texas",
-        "Utah",
-        "Vermont",
-        "Virgin Island",
-        "Virginia",
-        "Washington",
-        "West Virginia",
-        "Wisconsin",
-        "Wyoming",
-      ],
-    };
-  },
-  watch: {
-    search(val) {
-      if (val && val !== this.select && val.length > 5) {
-        this.lazyQuerySelections(val);
-      }
-    },
-  },
-  methods: {
-    lazyQuerySelections(v) {
-      const timeout = 300;
-      const localLastInputDate = new Date();
+<script lang="ts">
+import Vue from "vue";
+import { Component, Prop, Watch } from "vue-property-decorator";
+import GoogleMapsService from "../services/google-maps";
+import { GPlace } from "../types";
 
-      // lastInput was less than timeout ago
-      if (new Date() - this.lastInputDate < timeout) {
-        console.log(`Refresh will be triggered in ${timeout} seconds`);
-        setTimeout(() => {
-          // wait until user stop tiping so quickly
-          if (this.lastInputDate === localLastInputDate) {
-            this.querySelections(v);
-          }
-        }, timeout);
-      }
+@Component({
+  computed: {},
+})
+export default class GooglePlaceAutocomplete extends Vue {
+  private readonly = true;
+  private queryAddress = "";
+  private selectedPlaceName: string | null = null;
 
-      this.lastInputDate = localLastInputDate;
-    },
-    querySelections(v) {
-      this.loading = true;
-      // Simulated ajax query
+  private loading = false;
+  private candidates: GPlace[] = [];
+
+  private lastInputTimestamp = new Date().getTime();
+  private deltaCounter = 0;
+
+  @Prop({ required: true })
+  private value!: GPlace;
+
+  @Prop({ required: false, default: "Search for a place" })
+  private label!: string;
+
+  get candidatesNames() {
+    return this.candidates.map((candidate) => candidate.name);
+  }
+
+  /**
+   * Disable readonly mode when google SDK is loaded.
+   */
+  mounted() {
+    GoogleMapsService.ready.then(() => {
+      this.readonly = false;
+    });
+  }
+
+  /**
+   *
+   */
+  @Watch("selectedPlaceName")
+  onSelectedPlaceNameChange(newName: string) {
+    const place: GPlace = this.candidates.filter(
+      (item) => item.name === newName
+    )[0];
+    // emit selected place object
+    this.$emit("input", place);
+  }
+
+  /**
+   * Determine wether querySelections should be called or not. (Manage lazy loading)
+   */
+  @Watch("queryAddress")
+  private onQueryChange(query: string) {
+    const timeout = 300;
+    const maxIgnoredInput = 10;
+    const minQuerySize = 5;
+
+    const currentTimestamp = new Date().getTime();
+
+    /**
+     * check if query exists and has changed
+     * don't perform search if query is too small
+     * don't perform search for now if user is tiping
+     * */
+    //
+    if (
+      query &&
+      query !== this.selectedPlaceName &&
+      query.length > minQuerySize &&
+      currentTimestamp - this.lastInputTimestamp < timeout
+    ) {
       setTimeout(() => {
-        this.items = this.states.filter((e) => {
-          return (e || "").toLowerCase().indexOf((v || "").toLowerCase()) > -1;
-        });
-        this.loading = false;
-      }, 500);
-    },
-  },
-};
+        if (this.lastInputTimestamp === currentTimestamp) {
+          // called after user stoped tiping for <timeout> ms
+          this.querySelections(query);
+        }
+      }, timeout);
+    } else if (this.deltaCounter > maxIgnoredInput) {
+      this.deltaCounter = 0;
+      this.querySelections(query);
+    } else {
+      this.deltaCounter++;
+    }
+
+    this.lastInputTimestamp = currentTimestamp;
+  }
+
+  //lazyQuerySelections(query: string) {}
+
+  /**
+   * Query google places API to retrieve new suggestions
+   */
+  querySelections(query: string) {
+    this.loading = true;
+    GoogleMapsService.searchPlace(query).then((candidates) => {
+      this.candidates = candidates;
+      this.loading = false;
+    });
+  }
+}
 </script>
