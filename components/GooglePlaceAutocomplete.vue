@@ -1,9 +1,10 @@
 <template>
   <v-autocomplete
+    :readonly="readonly"
     v-model="select"
     :label="label"
     :loading="loading"
-    :items="items"
+    :items="itemsNames"
     :search-input.sync="search"
     cache-items
     hide-no-data
@@ -12,87 +13,59 @@
 </template>
 
 <script>
+import GoogleMapsService from "../services/google-maps";
+
 export default {
   props: {
+    value: {
+      required: true,
+    },
     label: {
       required: false,
-      default: "Hello bitches",
+      default: "Search for a place",
     },
   },
   data() {
     return {
+      readonly: true,
       lastInputDate: new Date(),
+      ignoredInputCounter: 0,
       loading: false,
       items: [],
       search: null,
       select: null,
-      states: [
-        "Alabama",
-        "Alaska",
-        "American Samoa",
-        "Arizona",
-        "Arkansas",
-        "California",
-        "Colorado",
-        "Connecticut",
-        "Delaware",
-        "District of Columbia",
-        "Federated States of Micronesia",
-        "Florida",
-        "Georgia",
-        "Guam",
-        "Hawaii",
-        "Idaho",
-        "Illinois",
-        "Indiana",
-        "Iowa",
-        "Kansas",
-        "Kentucky",
-        "Louisiana",
-        "Maine",
-        "Marshall Islands",
-        "Maryland",
-        "Massachusetts",
-        "Michigan",
-        "Minnesota",
-        "Mississippi",
-        "Missouri",
-        "Montana",
-        "Nebraska",
-        "Nevada",
-        "New Hampshire",
-        "New Jersey",
-        "New Mexico",
-        "New York",
-        "North Carolina",
-        "North Dakota",
-        "Northern Mariana Islands",
-        "Ohio",
-        "Oklahoma",
-        "Oregon",
-        "Palau",
-        "Pennsylvania",
-        "Puerto Rico",
-        "Rhode Island",
-        "South Carolina",
-        "South Dakota",
-        "Tennessee",
-        "Texas",
-        "Utah",
-        "Vermont",
-        "Virgin Island",
-        "Virginia",
-        "Washington",
-        "West Virginia",
-        "Wisconsin",
-        "Wyoming",
-      ],
     };
   },
+  mounted() {
+    // enable tiping only when google library is loaded
+    this.$google.then(() => {
+      this.readonly = false;
+    });
+  },
+  computed: {
+    itemsNames() {
+      return this.items.map((item) => item.name);
+    },
+  },
   watch: {
+    select(newValue) {
+      console.log(this.items);
+      const place = this.items.filter((item) => item.name === newValue)[0];
+      console.log("emit place");
+      this.$emit("input", place);
+    },
     search(val) {
-      if (val && val !== this.select && val.length > 5) {
-        this.lazyQuerySelections(val);
+      const maxIgnoredInput = 10;
+
+      if (val && val !== this.select) {
+        if (val.length > 5) {
+          this.lazyQuerySelections(val);
+        } else if (this.ignoredInputCounter > maxIgnoredInput) {
+          this.ignoredInputCounter = 0;
+          this.querySelections(val);
+        } else {
+          this.ignoredInputCounter++;
+        }
       }
     },
   },
@@ -114,15 +87,13 @@ export default {
 
       this.lastInputDate = localLastInputDate;
     },
-    querySelections(v) {
+
+    querySelections(query) {
       this.loading = true;
-      // Simulated ajax query
-      setTimeout(() => {
-        this.items = this.states.filter((e) => {
-          return (e || "").toLowerCase().indexOf((v || "").toLowerCase()) > -1;
-        });
+      GoogleMapsService.searchPlace(query).then((candidates) => {
+        this.items = candidates;
         this.loading = false;
-      }, 500);
+      });
     },
   },
 };
