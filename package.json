@@ -1,0 +1,36 @@
+{
+  "name": "vue-google-components",
+  "version": "1.0.0",
+  "description": "Set of material designed components that have built in interactions with Google's APIs.",
+  "main": "dist/index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sylvanld/vue-google-components.git"
+  },
+  "keywords": [
+    "google",
+    "material",
+    "vuetify",
+    "vue",
+    "plugin",
+    "google",
+    "maps",
+    "places"
+  ],
+  "author": "Sylvan Le Deunff",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sylvanld/vue-google-components/issues"
+  },
+  "homepage": "https://github.com/sylvanld/vue-google-components#readme",
+  "dependencies": {
+    "vue": "^2.6.12",
+    "vuetify": "^2.3.17"
+  }
+}
