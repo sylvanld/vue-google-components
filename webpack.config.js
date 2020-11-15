@@ -1,6 +1,7 @@
 var path = require('path')
 var webpack = require('webpack')
 const { VueLoaderPlugin } = require('vue-loader')
+const { VuetifyLoaderPlugin } = require('vuetify-loader')
 
 module.exports = {
     entry: './src/index.ts',
@@ -13,6 +14,15 @@ module.exports = {
     },
     module: {
         rules: [
+            {
+                test: /\.sass$/,
+                loader: 'vue-loader',
+                options: {
+                    loaders: {
+                        'sass': 'sass-loader?indentedSyntax',
+                    }
+                }
+            },
             {
                 test: /\.vue$/,
                 loader: 'vue-loader',
@@ -55,6 +65,21 @@ module.exports = {
     },
     plugins: [
         // make sure to include the plugin for the magic
-        new VueLoaderPlugin()
-    ]
+        new VueLoaderPlugin(),
+        new VuetifyLoaderPlugin()
+    ],
+    externals: {
+        vue: {
+            commonjs: 'vue',
+            commonjs2: 'vue',
+            amd: 'vue',
+            root: 'Vue'
+        },
+        vuetify: {
+            commonjs: 'vuetify',
+            commonjs2: 'vuetify',
+            amd: 'vuetify',
+            root: 'Vuetify'
+        }
+    }
 }

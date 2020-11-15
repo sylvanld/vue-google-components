@@ -33,10 +33,10 @@ function injectGoogleSdk(apiKey: string, optionsLibraries: { [library: string]: 
 
 export default {
     // called by Vue.use(VueGoogleComponents)
-    install(vue: VueConstructor, options: VueGoogleComponentsOptions) {
+    install(Vue: VueConstructor, options: VueGoogleComponentsOptions) {
         // register plugin's components
-        vue.component('google-place-autocomplete', GooglePlaceAutocomplete);
-        vue.component('google-map', GoogleMap);
+        Vue.component('google-place-autocomplete', GooglePlaceAutocomplete);
+        Vue.component('google-map', GoogleMap);
 
         // inject google sdk in vue once loaded with appropriate libraries
         // usage in component: this.$google.then(google => {...})
